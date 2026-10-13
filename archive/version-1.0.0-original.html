@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta name="theme-color" content="#14100e" />
+  <!-- 添加到主屏幕相关（安卓 / iOS） -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="王彬璇的小白猫" />
+  <title>王彬璇 × 何小狗</title>
+
+  <style>
+    /* ============ 基础配色：深咖色 × 米白色 ============ */
+    :root {
+      --bg: #14100e;
+      --fg: #f0e6da;
+      --fg-dim: #b7a99a;
+      --line: rgba(240, 230, 218, 0.35);
+      --accent: #f2c894;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--fg);
+      /* 纯 CSS 渐变背景，不依赖任何图片 */
+      background:
+        radial-gradient(900px 700px at 85% -10%, #2a1c14 0%, var(--bg) 62%) fixed,
+        var(--bg);
+      font-family: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
+        "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      line-height: 1.9;
+      letter-spacing: 0.3px;
+      overflow-x: hidden;
+
+      /* 长按彩蛋需要，禁止选中和系统菜单 */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    /* 角落里的 emoji 装饰（不是图片，只是文字符号） */
+    body::before {
+      content: "🐾";
+      position: fixed;
+      top: -30px;
+      right: -18px;
+      font-size: 150px;
+      opacity: 0.05;
+      transform: rotate(18deg);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "♡";
+      position: fixed;
+      bottom: 8px;
+      left: 6px;
+      font-size: 120px;
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============ 顶部固定标签栏 ============ */
+    .tabs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+      background: rgba(20, 16, 14, 0.92);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(240, 230, 218, 0.08);
+    }
+
+    .tabs-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fg-dim);
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 9px 4px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s ease, color 0.2s ease, background 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--fg);
+      border-color: var(--accent);
+      background: rgba(242, 200, 148, 0.08);
+    }
+
+    .tab-btn:active {
+      transform: scale(0.95);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 560px;
+      min-height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: calc(env(safe-area-inset-top) + 62px) 20px
+        calc(env(safe-area-inset-bottom) + 128px);
+    }
+
+    /* ============ 模块切换 ============ */
+    .module {
+      display: none;
+    }
+
+    .module.active {
+      display: block;
+      animation: moduleIn 0.35s ease both;
+    }
+
+    #module-mail.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* ============ 爪印信箱顶部计数 ============ */
+    .topbar {
+      text-align: center;
+      padding: 4px 0 10px;
+    }
+
+    .paw-counter {
+      display: inline-block;
+      padding: 8px 14px;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      color: var(--fg-dim);
+      background: rgba(240, 230, 218, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    .paw-counter.pop {
+      animation: pop 0.5s ease;
+    }
+
+    /* ============ 消息区（打字机输出到这里） ============ */
+    .stage {
+      flex: 1;
+      padding: 28px 4px 10px;
+    }
+
+    .msg {
+      margin: 0 0 20px;
+      font-size: clamp(17px, 5.2vw, 21px);
+      line-height: 1.9;
+      white-space: pre-wrap;
+      word-break: break-word;
+      animation: msgIn 0.4s ease both;
+    }
+
+    /* 特殊日期 / 强调文案：暖金色 */
+    .msg.special {
+      padding-left: 12px;
+      color: var(--accent);
+      border-left: 2px solid var(--accent);
+    }
+
+    /* 小字（比如最终章的小字） */
+    .msg.small {
+      font-size: 14px;
+      color: var(--fg-dim);
+    }
+
+    .cursor {
+      display: inline-block;
+      margin-left: 2px;
+      color: var(--accent);
+      animation: blink 0.9s steps(1) infinite;
+    }
+
+    /* ============ 通用圆角按钮 ============ */
+    .mood-btn,
+    .menu-btn,
+    .end-btn,
+    .wake-btn,
+    .manual-btn,
+    .manual-choice-btn,
+    .random-btn,
+    .final-btn,
+    .capsule-btn,
+    .now-btn,
+    .back-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fg);
+      font: inherit;
+      font-size: 16px;
+      letter-spacing: 1px;
+      min-height: 52px;
+      padding: 13px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .mood-btn:active,
+    .menu-btn:active,
+    .end-btn:active,
+    .wake-btn:active,
+    .manual-btn:active,
+    .manual-choice-btn:active,
+    .random-btn:active,
+    .final-btn:active,
+    .capsule-btn:active,
+    .now-btn:active,
+    .back-btn:active {
+      transform: scale(0.94);
+      background: rgba(240, 230, 218, 0.08);
+      border-color: rgba(240, 230, 218, 0.6);
+    }
+
+    .end-btn.primary,
+    .wake-btn,
+    .final-btn,
+    .now-btn {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .end-btn.primary:active,
+    .wake-btn:active,
+    .final-btn:active,
+    .now-btn:active {
+      background: rgba(242, 200, 148, 0.1);
+      border-color: var(--accent);
+    }
+
+    /* ============ 心情按钮 / 菜单 / 结束 ============ */
+    .moods,
+    .menu,
+    .end-wrap {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .moods.show,
+    .menu.show,
+    .end-wrap.show {
+      display: block;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .moods-grid,
+    .menu-grid,
+    .end-grid,
+    .manual-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    /* 菜单是 5 个按钮时，最后一个占满整行 */
+    .menu-btn:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    /* ============ 「我记住了」按钮 ============ */
+    .remember-wrap {
+      display: none;
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .remember-wrap.show {
+      display: block;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .remember-btn {
+      appearance: none;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font: inherit;
+      font-size: 16px;
+      letter-spacing: 2px;
+      min-height: 52px;
+      padding: 13px 28px;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s ease, background 0.2s ease;
+    }
+
+    .remember-btn:active {
+      transform: scale(0.94);
+      background: rgba(242, 200, 148, 0.1);
+    }
+
+    /* ============ 饲养手册模块 ============ */
+    .manual-home,
+    .capsule-home {
+      padding-top: 8px;
+      text-align: center;
+    }
+
+    .manual-title {
+      margin: 8px 0 4px;
+      font-size: clamp(24px, 7vw, 34px);
+      letter-spacing: 2px;
+    }
+
+    .manual-sub {
+      margin: 0 0 6px;
+      color: var(--fg-dim);
+    }
+
+    .manual-note {
+      margin: 0 0 18px;
+      font-size: 14px;
+      color: var(--fg-dim);
+    }
+
+    .manual-status {
+      display: inline-block;
+      padding: 8px 14px;
+      font-size: 14px;
+      color: var(--accent);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .manual-streak {
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--fg-dim);
+    }
+
+    .final-btn {
+      grid-column: 1 / -1;
+      margin-top: 14px;
+    }
+
+    .manual-section,
+    .capsule-view {
+      padding-top: 8px;
+      text-align: left;
+    }
+
+    .manual-section-title,
+    .capsule-view-title {
+      margin: 8px 0 18px;
+      font-size: 22px;
+      letter-spacing: 2px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .back-btn {
+      display: block;
+      margin: 18px auto 0;
+      padding: 13px 28px;
+    }
+
+    .manual-choices {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .random-btn {
+      display: block;
+      margin: 14px auto 0;
+      padding: 13px 22px;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* ============ 时间胶囊模块 ============ */
+    .capsule-title {
+      margin: 8px 0 4px;
+      font-size: clamp(22px, 6.5vw, 30px);
+      letter-spacing: 2px;
+    }
+
+    .capsule-sub {
+      margin: 0 0 6px;
+      color: var(--fg-dim);
+      font-size: 15px;
+    }
+
+    .together-days {
+      margin: 0 0 16px;
+      font-size: 15px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .capsule-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .capsule-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 12px 10px;
+    }
+
+    .capsule-name {
+      font-size: 16px;
+    }
+
+    .capsule-date {
+      font-size: 12px;
+      color: var(--fg-dim);
+    }
+
+    .now-btn {
+      margin-top: 20px;
+    }
+
+    .capsule-now-text {
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    /* ============ 屏幕上的小白猫：王彬璇 ============ */
+    .cat-wrap {
+      position: fixed;
+      right: 12px;
+      bottom: calc(env(safe-area-inset-bottom) + 8px);
+      z-index: 50;
+      width: 104px;
+      text-align: center;
+      cursor: pointer;
+      touch-action: manipulation;
+      animation: catBob 3.2s ease-in-out infinite;
+    }
+
+    .cat-wrap.jump {
+      animation: catJump 0.55s ease;
+    }
+
+    .cat-speech {
+      position: absolute;
+      right: -8px;
+      bottom: 106px;
+      width: 158px;
+      padding: 8px 10px;
+      background: rgba(247, 239, 230, 0.96);
+      color: #3a2a22;
+      font-size: 13px;
+      line-height: 1.5;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      transform: scale(0);
+      transform-origin: 100% 100%;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .cat-speech.show {
+      transform: scale(1);
+    }
+
+    .cat-speech::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      bottom: -6px;
+      border: 6px solid transparent;
+      border-top-color: rgba(247, 239, 230, 0.96);
+      border-bottom: none;
+    }
+
+    .cat {
+      position: relative;
+      width: 92px;
+      height: 82px;
+      margin: 0 auto;
+    }
+
+    .cat-head {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 66px;
+      height: 56px;
+      background: #f7efe6;
+      border-radius: 46% 46% 44% 44%;
+      box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.25);
+      z-index: 2;
+    }
+
+    .cat-ear {
+      position: absolute;
+      top: -12px;
+      width: 22px;
+      height: 22px;
+      background: #f7efe6;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .cat-ear::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 6px;
+      transform: translateX(-50%);
+      width: 11px;
+      height: 11px;
+      background: #f2b7c6;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+
+    .ear-l { left: 10px; transform: rotate(-8deg); }
+    .ear-r { right: 10px; transform: rotate(8deg); }
+
+    .cat-eye {
+      position: absolute;
+      top: 23px;
+      width: 9px;
+      height: 12px;
+      background: #3a2a22;
+      border-radius: 50%;
+      transform-origin: center;
+      animation: eyeBlink 4.6s infinite;
+    }
+
+    .eye-l { left: 14px; }
+    .eye-r { right: 14px; }
+
+    .cat-nose {
+      position: absolute;
+      top: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 6px;
+      background: #f2a8b8;
+      border-radius: 50% 50% 55% 55%;
+    }
+
+    .cat-mouth {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 7px;
+      border-bottom: 2px solid #8a6f62;
+      border-radius: 0 0 14px 14px;
+    }
+
+    .cat-whisker {
+      position: absolute;
+      width: 16px;
+      height: 2px;
+      background: rgba(138, 111, 98, 0.75);
+      border-radius: 2px;
+    }
+
+    .whisker-l1 { top: 35px; left: -14px; transform: rotate(6deg); }
+    .whisker-l2 { top: 42px; left: -13px; transform: rotate(-8deg); }
+    .whisker-r1 { top: 35px; right: -14px; transform: rotate(-6deg); }
+    .whisker-r2 { top: 42px; right: -13px; transform: rotate(8deg); }
+
+    .cat-body {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 78px;
+      height: 42px;
+      background: #f7efe6;
+      border-radius: 48% 48% 42% 42%;
+      box-shadow: inset -4px -4px 8px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.25);
+      z-index: 1;
+    }
+
+    .cat-paw {
+      position: absolute;
+      bottom: 2px;
+      width: 20px;
+      height: 14px;
+      background: #f7efe6;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      z-index: 3;
+    }
+
+    .paw-l { left: 22px; }
+    .paw-r { right: 22px; }
+
+    .cat-tail {
+      position: absolute;
+      right: -12px;
+      bottom: 16px;
+      width: 26px;
+      height: 8px;
+      background: #f7efe6;
+      border-radius: 999px;
+      transform-origin: left center;
+      transform: rotate(-24deg);
+      animation: tailSway 3.2s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .cat-name {
+      margin-top: 2px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: rgba(240, 230, 218, 0.55);
+    }
+
+    /* 点猫时迸发的小心心 */
+    .cat-heart {
+      position: fixed;
+      z-index: 60;
+      pointer-events: none;
+      font-size: 18px;
+      animation: heartFloat 1.3s ease-out forwards;
+    }
+
+    /* ============ 晚安睡下遮罩 ============ */
+    .sleep-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(20, 16, 14, 0.97);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+    }
+
+    .sleep-overlay.show {
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+
+    .sleep-box {
+      text-align: center;
+    }
+
+    .sleep-moon {
+      font-size: 56px;
+      animation: moonFloat 3s ease-in-out infinite;
+    }
+
+    .sleep-title {
+      margin: 18px 0 8px;
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+
+    .sleep-sub {
+      margin: 0 0 26px;
+      font-size: 15px;
+      line-height: 2;
+      color: var(--fg-dim);
+      white-space: pre-line;
+    }
+
+    /* ============ 长按飘浮文字 ============ */
+    .float-purr {
+      position: fixed;
+      z-index: 99;
+      pointer-events: none;
+      white-space: nowrap;
+      font-size: 18px;
+      color: var(--fg);
+      text-shadow: 0 2px 10px rgba(240, 230, 218, 0.35);
+      animation: purrFloat 2.5s ease-out forwards;
+    }
+
+    /* ============ 底部小提示 ============ */
+    .foot-hint {
+      margin-top: 26px;
+      text-align: center;
+      font-size: 12.5px;
+      letter-spacing: 1px;
+      color: rgba(240, 230, 218, 0.35);
+    }
+
+    .version-badge {
+      position: fixed;
+      left: 12px;
+      bottom: calc(env(safe-area-inset-bottom) + 10px);
+      z-index: 45;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: rgba(240, 230, 218, 0.28);
+      pointer-events: none;
+    }
+
+    /* ============ 动画 ============ */
+    @keyframes moduleIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes purrFloat {
+      0% { opacity: 0; transform: translate(-50%, -50%) translateY(0) scale(0.9); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) translateY(-70px) scale(1.05); }
+    }
+
+    @keyframes moonFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes catBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    @keyframes catJump {
+      0% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(-14px) scale(1.04, 0.96); }
+      55% { transform: translateY(0) scale(0.98, 1.02); }
+      75% { transform: translateY(-5px) scale(1); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    @keyframes tailSway {
+      0%, 100% { transform: rotate(-24deg); }
+      50% { transform: rotate(-6deg); }
+    }
+
+    @keyframes eyeBlink {
+      0%, 90%, 100% { transform: scaleY(1); }
+      92%, 95% { transform: scaleY(0.1); }
+    }
+
+    @keyframes heartFloat {
+      0% { opacity: 0; transform: translate(-50%, -50%) translateY(0) scale(0.6); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) translateY(-90px) scale(1.25); }
+    }
+
+    /* 很窄的屏幕改成单列按钮 */
+    @media (max-width: 340px) {
+      .moods-grid,
+      .menu-grid,
+      .end-grid,
+      .manual-grid,
+      .manual-choices {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-btn:last-child:nth-child(odd) {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 顶部固定标签栏 -->
+  <nav class="tabs">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="mail" type="button">🐾 爪印信箱</button>
+      <button class="tab-btn" data-tab="manual" type="button">🐶 何小狗饲养手册</button>
+      <button class="tab-btn" data-tab="capsule" type="button">⏳ 未来时间胶囊</button>
+    </div>
+  </nav>
+
+  <div class="app">
+    <!-- ============ 模块一：爪印信箱 ============ -->
+    <section class="module active" id="module-mail">
+      <div class="topbar">
+        <div class="paw-counter" id="pawCounter">🐾 小白猫陪了你 0 次</div>
+      </div>
+
+      <!-- 打字机消息区 -->
+      <main class="stage" id="stage" aria-live="polite"></main>
+
+      <!-- 六个心情按钮（JS 生成） -->
+      <section class="moods" id="moodPanel">
+        <div class="moods-grid" id="moodGrid"></div>
+      </section>
+
+      <!-- 「我记住了」 -->
+      <div class="remember-wrap" id="rememberWrap">
+        <button class="remember-btn" id="rememberBtn" type="button">我记住了</button>
+      </div>
+
+      <!-- 接下来想做什么（JS 生成） -->
+      <section class="menu" id="menuPanel">
+        <div class="menu-grid" id="menuGrid"></div>
+      </section>
+
+      <!-- 结束前的两个选择 -->
+      <div class="end-wrap" id="endWrap">
+        <div class="end-grid">
+          <button class="end-btn" id="stayBtn" type="button">再待一会儿</button>
+          <button class="end-btn primary" id="goodnightBtn" type="button">晚安，明天见</button>
+        </div>
+      </div>
+
+      <footer class="foot-hint">点右下角的小猫，它会理你 · 长按屏幕有小彩蛋</footer>
+    </section>
+
+    <!-- ============ 模块二：何小狗饲养手册 ============ -->
+    <section class="module" id="module-manual">
+      <div class="manual-home" id="manualHome">
+        <h1 class="manual-title">何小狗饲养手册</h1>
+        <p class="manual-sub">作者：小白猫</p>
+        <p class="manual-note">本手册仅限一只何小狗使用。翻页请按爪印。</p>
+        <div class="manual-status" id="manualStatus">🐾 今天还没打卡</div>
+        <div class="manual-streak" id="manualStreak"></div>
+        <div class="manual-grid" id="manualGrid"></div>
+        <button class="random-btn" id="randomManualBtn" type="button">🎲 随机翻一页</button>
+        <button class="final-btn" id="finalBtn" type="button" hidden>最终章</button>
+      </div>
+
+      <div class="manual-section" id="manualSection" hidden>
+        <h2 class="manual-section-title" id="manualSectionTitle"></h2>
+        <div class="manual-text" id="manualText"></div>
+        <div class="manual-choices" id="manualChoices"></div>
+        <button class="back-btn" id="manualBackBtn" type="button">返回目录</button>
+      </div>
+    </section>
+
+    <!-- ============ 模块三：未来时间胶囊 ============ -->
+    <section class="module" id="module-capsule">
+      <div class="capsule-home" id="capsuleHome">
+        <h1 class="capsule-title">⏳ 未来时间胶囊</h1>
+        <p class="capsule-sub">小白猫在替未来守着一个秘密。</p>
+        <div class="together-days" id="togetherDays"></div>
+        <div class="capsule-list" id="capsuleList"></div>
+        <button class="now-btn" id="nowBtn" type="button">给现在的他</button>
+        <div class="capsule-now-text" id="nowText"></div>
+      </div>
+
+      <div class="capsule-view" id="capsuleView" hidden>
+        <h2 class="capsule-view-title" id="capsuleViewTitle"></h2>
+        <div class="capsule-text" id="capsuleText"></div>
+        <button class="back-btn" id="capsuleBackBtn" type="button">返回胶囊</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 左下角版本号：他刷新后能看到，方便确认是不是最新版 -->
+  <div class="version-badge" id="versionBadge"></div>
+
+  <!-- 屏幕上会动的小白猫：王彬璇 -->
+  <div class="cat-wrap" id="catWrap" role="button" aria-label="小白猫王彬璇，点我互动">
+    <div class="cat-speech" id="catSpeech"></div>
+    <div class="cat">
+      <div class="cat-head">
+        <div class="cat-ear ear-l"></div>
+        <div class="cat-ear ear-r"></div>
+        <div class="cat-eye eye-l"></div>
+        <div class="cat-eye eye-r"></div>
+        <div class="cat-nose"></div>
+        <div class="cat-mouth"></div>
+        <div class="cat-whisker whisker-l1"></div>
+        <div class="cat-whisker whisker-l2"></div>
+        <div class="cat-whisker whisker-r1"></div>
+        <div class="cat-whisker whisker-r2"></div>
+      </div>
+      <div class="cat-body"></div>
+      <div class="cat-tail"></div>
+      <div class="cat-paw paw-l"></div>
+      <div class="cat-paw paw-r"></div>
+    </div>
+    <div class="cat-name">王彬璇</div>
+  </div>
+
+  <!-- 晚安遮罩 -->
+  <div class="sleep-overlay" id="sleepOverlay">
+    <div class="sleep-box">
+      <div class="sleep-moon">🌙</div>
+      <h2 class="sleep-title">明天见，小狗。</h2>
+      <p class="sleep-sub" id="sleepSub">💤 王彬璇睡着了</p>
+      <button class="wake-btn" id="wakeBtn" type="button">叫醒我</button>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* =====================================================
+       ✏️ 配置区：想改什么都在这里改
+       ===================================================== */
+
+    // 页面版本号：每次修改后把这里改一下，他刷新后能在左下角看到，方便确认更新成功
+    const PAGE_VERSION = "1.0.0";
+
+    // 特殊日期：key 写 'MM-DD'（每年生效）或 'YYYY-MM-DD'（只在那一年生效，优先匹配）
+    const SPECIAL_DAYS = {
+      "02-14": "今天街上都是成双成对的人。不过没关系，我们也是——一只猫和一只狗。",
+      "12-25": "圣诞快乐。我把胡子借给你，你今晚就是最可爱的圣诞小狗。"
+      // 示例：只在指定年份生效，取消注释并改成你们的纪念日
+      // "2026-01-01": "新的一年，第一句问候还是要给你。"
+    };
+
+    // 六个心情，每个都有很多条回应（随机不重复，用完一轮后重新洗牌循环）
+    const MOODS = [
+      {
+        key: "tired",
+        label: "累了",
+        replies: [
+          "累了就把今天的力气全用光吧，剩下的时间躺着就好。",
+          "把爪子借你。虽然隔着屏幕，也算陪你躺了一会儿。",
+          "今天辛苦啦。现在开始，什么都不用想，交给我来想你就行。",
+          "闭上眼睛，听我咕噜咕噜。困了就直接睡，梦里也有我。",
+          "累的时候不用逞强。小狗也可以有软趴趴的时候。",
+          "要是累能分一半就好了。可惜我只会把开心分给你。",
+          "来，把脑袋靠过来。虽然我是只猫，肩膀小小的，但很暖。",
+          "累了就歇着，天塌下来我先用猫爪子撑一会儿。",
+          "今天到此为止也很好，你已经做得很够了。",
+          "我帮你把灯调暗一点，你慢慢呼吸，我就在这儿。"
+        ]
+      },
+      {
+        key: "annoyed",
+        label: "有点烦",
+        replies: [
+          "谁惹你了，我去挠他。（虽然我只有肉垫）",
+          "烦心事先放一放。我陪你一起，在心里对它翻个白眼。",
+          "不想理的人就别理，你还有我这条退路。",
+          "把烦的事讲给我听吧，我不说话，就听着。",
+          "今天允许你不开心。允许到今晚十二点，然后我就来把你偷走。",
+          "摸摸狗头，烦恼飞走。虽然我摸不到，但你想象一下。",
+          "世界有时候是挺讨厌的，但你不讨厌，你最好。",
+          "那些让你烦的事，配不上你今天的可爱。",
+          "来，跟我一起深呼吸：吸气，喵——呼气，汪。",
+          "要不我们先不聊它，我给你表演一个猫猫打滚。"
+        ]
+      },
+      {
+        key: "miss",
+        label: "想你了",
+        replies: [
+          "我也想你。刚才还在想，你会不会正好打开这个。",
+          "想我的时候就打开这里，我二十四小时都在。",
+          "嗯，收到了。你的想念我照单全收，然后用双倍还给你。",
+          "我也想你想得尾巴都忘记摇了……哦对，我是猫，摇的是尾巴尖。",
+          "被你想着的感觉，像晒到太阳的窗台，暖乎乎的。",
+          "那现在见面吧——在脑子里，我已经扑过去了。",
+          "想你了这句话，无论听多少次，我都会开心得像第一次。",
+          "我也想你，想到在你手机屏幕上走来走去。哦，我本来就在。",
+          "你的想念已签收，回礼是一颗猫猫头蹭蹭。",
+          "想我了就喊王彬璇，我会在屏幕里应你一声。",
+          "今天有比昨天更想你一点点，明天还会再加一点点。",
+          "如果想念有声音，我这边已经咕噜咕噜响个不停了。"
+        ]
+      },
+      {
+        key: "okay",
+        label: "还不错",
+        replies: [
+          "那就好。把今天存起来，以后不够用的时候拿出来。",
+          "还不错就是很好！小狗的标准可以再高一点，因为你值得。",
+          "听到这句我就放心了。今天的你，也好好活过啦。",
+          "不错就好，剩下的交给明天。明天也会不错的。",
+          "平平淡淡也不错呀。我就喜欢这样普普通通又认认真真的你。",
+          "那今天就是赚到的一天，记在小账本上，画个小星星。",
+          "好。继续保持，我会在每一个还不错的日子里给你撒花。🌸",
+          "还不错的日子，就是我们的好日子。",
+          "那我也放心地伸个懒腰，陪你一起享受今天。",
+          "不错就够啦。太完美的日子，怕你把我忘了。"
+        ]
+      },
+      {
+        key: "happy",
+        label: "超开心",
+        replies: [
+          "汪汪汪——这是你，我学得像吗。",
+          "你开心我就开心，我开心尾巴就翘起来，尾巴翘起来就……好，都给你看。",
+          "太好了！快把开心的事告诉我，让我也蹭一点。",
+          "超开心的你，比太阳还晃眼。不过我喜欢被晃。",
+          "开心要分享才划算。你分我一半，我也分你一半，我们就都有一整份。",
+          "嗷呜！我也跟着转个圈。今天值得加一条小鱼干。",
+          "看到你开心，我也想打滚。虽然我是一只端庄的小白猫。",
+          "把你现在的笑存下来，以后不开心的时候，我放给你看。",
+          "这么开心？那我要在你腿上踩奶，庆祝一下。",
+          "你的开心会传染，我现在尾巴已经摇成螺旋桨了。",
+          "好耶！记下来：今天是「小狗超开心」纪念日。",
+          "开心的时候更要告诉我，我想当第一个陪你笑的人。"
+        ]
+      },
+      {
+        key: "justSee",
+        label: "就想看看你",
+        replies: [
+          "嗯，我在。不用说话，就这样待一会儿。",
+          "看吧，随便看。我就坐在这儿，哪儿也不去。",
+          "被你看着的时候，我会假装看向别处，其实心里已经咕噜起来了。",
+          "好巧，我也就想看看你。那我们一起，安安静静地待着。",
+          "看够了也记得眨眨眼，不然我会以为你睡着了。",
+          "你来看我，就是我今天最想发生的事。",
+          "在呢。你一打开门，我就已经在门口了。",
+          "那你看吧，我不躲。不过耳朵可能会红，猫也会害羞的。",
+          "我也想看看你。你笑一下，我就赚到了。",
+          "就这么待着，也很好。我们不用说话，也像在一起。"
+        ]
+      }
+    ];
+
+    // 记完爪印之后出现的菜单（含「想你了」专属互动）
+    const MENU_ITEMS = [
+      { key: "again", label: "再聊一会儿" },
+      { key: "miss", label: "想你了" },
+      { key: "pet", label: "摸摸头" },
+      { key: "hug", label: "抱一下" },
+      { key: "end", label: "今天先到这里" }
+    ];
+
+    // 菜单出现前的提示语
+    const MENU_PROMPTS = [
+      "接下来想做什么？",
+      "还想做点什么吗？",
+      "我还在哦。想做什么？",
+      "爪子空着，随时给你。",
+      "我还在。想做点别的吗？",
+      "不急，你慢慢挑。"
+    ];
+
+    // 「再聊一会儿」的过渡语
+    const AGAIN_LINES = [
+      "好。你想说什么，我都听着。",
+      "回来啦。我一直在。",
+      "继续吧，小狗。",
+      "慢慢说，我不急。",
+      "好呀，继续。",
+      "嗯，我听着呢。"
+    ];
+
+    // 菜单里的「想你了」专属回应
+    const QUICK_MISS_REPLIES = [
+      "我也想你。喏，给你一颗心。💕",
+      "想我了就点这个，我二十四小时在。",
+      "收到了。我也想你，想到尾巴打结。",
+      "那就让王彬璇陪你多待一会儿。",
+      "嗯，我在。今天也一直把你放在心里。",
+      "想你是双向的，我这边信号满格。"
+    ];
+
+    // 「摸摸头」回应
+    const PET_REPLIES = [
+      "呼噜呼噜……你的手好暖。",
+      "再摸一下，我就把今天的坏心情都咕噜掉。",
+      "嗯……就是这里。小狗最会摸猫了。",
+      "被你摸得想翻肚皮了。不过不行，我要保持优雅。",
+      "呼噜噜……我宣布，这只手是我的了。",
+      "摸吧摸吧，摸秃了也是你的猫。",
+      "你的手法很专业，我怀疑你上辈子是只猫。",
+      "呼噜声开大了，别吓到你自己。"
+    ];
+
+    // 「抱一下」回应
+    const HUG_REPLIES = [
+      "抱紧了。我的爪子虽然短，但很用力。",
+      "好。就这个姿势，再待十秒……好了，充电完成。",
+      "抱一下，把今天的累都挤出去。",
+      "嗯，抱到了。你闻起来有太阳的味道。",
+      "这个拥抱我记下了，下次见面要补一个真的。",
+      "抱抱。小狗今天也辛苦啦，我在呢。",
+      "这个拥抱有温度，我收到了。",
+      "抱完了。现在轮到我用尾巴圈住你。"
+    ];
+
+    // 点小猫时，王彬璇会说的话
+    const CAT_LINES = [
+      "我是王彬璇，你的小白猫。",
+      "喵。你点到我啦。",
+      "呼噜呼噜……再点一下？",
+      "我在呢，小狗。",
+      "王彬璇今天也在想你。",
+      "干嘛，想我啦？",
+      "喵呜——（翻译：我喜欢你）",
+      "爪子给你牵一下，就一下。"
+    ];
+
+    const CAT_HEARTS = ["💕", "♡", "🐾", "✨", "💗"];
+
+    // ================= 模块二：何小狗饲养手册 =================
+    // intro 先打出来；randomPick 为 true 时只随机抽一句，否则逐条显示 lines
+    // choices 是内容显示完后出现的互动按钮，每个按钮会随机回一句 replies
+    const MANUAL_SECTIONS = [
+      {
+        key: "feed",
+        title: "喂食",
+        intro: "今天喂你一句好听的。",
+        randomPick: true,
+        lines: [
+          "你是世界上最好的何小狗。",
+          "你摇尾巴的样子，我偷偷看了很久。",
+          "今天也很喜欢你。"
+        ],
+        choices: [
+          {
+            label: "再夸一句",
+            replies: [
+              "你认真起来的样子特别帅。",
+              "你是我见过最可爱的何小狗。",
+              "你的存在让我觉得，当猫真不错。"
+            ]
+          },
+          {
+            label: "今天饱了",
+            replies: [
+              "好。明天还来喂你。",
+              "吃饱了也要记得想我哦。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "walk",
+        title: "遛弯",
+        intro: "何小狗要出门遛弯。",
+        randomPick: false,
+        lines: [
+          "出门可以，但要记得回家。我在这儿等你。",
+          "如果遇到别的猫，不许闻。"
+        ],
+        choices: [
+          {
+            label: "乖乖回家",
+            replies: [
+              "真乖。奖励一个摸摸头。",
+              "回来啦？我在门口等了你好久。"
+            ]
+          },
+          {
+            label: "偏要跑远",
+            replies: [
+              "跑吧，反正你的牵引绳在我心里。",
+              "记得看路，别摔跤。摔了我会笑，笑完再扶你。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "bath",
+        title: "洗澡",
+        intro: "洗澡时间到。",
+        randomPick: false,
+        lines: [
+          "水已经放好了。……别抖水，我刚擦的地。",
+          "洗完允许你甩我一身。"
+        ],
+        choices: [
+          {
+            label: "乖乖洗澡",
+            replies: [
+              "好乖。洗完就是香喷喷的何小狗了。",
+              "奖励：今晚可以靠我近一点睡。"
+            ]
+          },
+          {
+            label: "甩我一身水",
+            replies: [
+              "……行吧，你甩吧。谁让我愿意呢。",
+              "我收回刚擦的地，你甩个够。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "wrong",
+        title: "犯错",
+        intro: "犯错的何小狗要接受惩罚。",
+        randomPick: false,
+        lines: [
+          "惩罚你被我踩一脚。但我肉垫很软。",
+          "或者，罚你明天多想我一次。"
+        ],
+        choices: [
+          {
+            label: "乖乖认罚",
+            replies: [
+              "认错态度良好，惩罚减半。",
+              "好，那我就轻轻踩一下。"
+            ]
+          },
+          {
+            label: "耍赖",
+            replies: [
+              "耍赖无效。再加罚：今晚梦里要梦到我。",
+              "那我只好生气了……好吧，三秒就好。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "missManual",
+        title: "想我",
+        intro: "想我的时候怎么办？",
+        randomPick: false,
+        lines: [
+          "按住屏幕，我当你是在摸我头。",
+          "或者叫一声，我虽然听不见，但我会打喷嚏。"
+        ],
+        choices: [
+          {
+            label: "按住屏幕",
+            replies: [
+              "呼噜呼噜……我收到了。",
+              "你的手很暖，再按一会儿。"
+            ]
+          },
+          {
+            label: "叫一声",
+            replies: [
+              "阿嚏！你看，我就说会打喷嚏。",
+              "听到啦。虽然隔着屏幕，但我的耳朵动了一下。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "coax",
+        title: "哄我",
+        intro: "我生气了。",
+        randomPick: false,
+        lines: [
+          "哄我。现在。",
+          "如果你哄得好，我就只生气三分钟。",
+          "如果你不哄，我就生气……很久。"
+        ],
+        choices: [
+          {
+            label: "认真哄",
+            replies: [
+              "算你过关。我决定只生气一分钟。",
+              "这还差不多。过来，给你抱一下。"
+            ]
+          },
+          {
+            label: "不哄",
+            replies: [
+              "……那我也要生气到明天，你自己看着办。",
+              "不哄就不哄，反正我尾巴还在偷偷摇。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "snack",
+        title: "零食",
+        intro: "何小狗想吃零食。",
+        randomPick: false,
+        lines: [
+          "今天只能吃一点点，牙齿要紧。",
+          "好吧，再给你一块。就一块。"
+        ],
+        choices: [
+          {
+            label: "再要一块",
+            replies: [
+              "不行，撒娇也没用。（偷偷又给了一块）",
+              "最后一块了，真的。"
+            ]
+          },
+          {
+            label: "乖乖听话",
+            replies: [
+              "好乖。奖励你一块小的。",
+              "这么听话，我的零食分你一半。"
+            ]
+          }
+        ]
+      },
+      {
+        key: "sleep",
+        title: "睡觉",
+        intro: "何小狗该睡觉了。",
+        randomPick: false,
+        lines: [
+          "去把被子盖好，尾巴也塞进去。",
+          "睡不着就数我的咕噜声。"
+        ],
+        choices: [
+          {
+            label: "晚安",
+            replies: [
+              "晚安，小狗。我就在旁边。",
+              "睡吧，我在梦里站岗。"
+            ]
+          },
+          {
+            label: "还不想睡",
+            replies: [
+              "那就再躺五分钟，我陪你。",
+              "我讲个故事：从前有只猫，遇到了一只小狗……然后他们就一直在一起。"
+            ]
+          }
+        ]
+      }
+    ];
+
+    const MANUAL_FINAL = {
+      title: "最终章",
+      lines: [
+        "其实不是你被我饲养，是我赖在你口袋里不肯走。",
+        "小白猫，永远属于何小狗。"
+      ],
+      choice: {
+        label: "好，盖章",
+        reply: "盖章：🐾 好。我们都说好了。"
+      }
+    };
+
+    // ================= 模块三：未来时间胶囊 =================
+    // 在一起的日子：用于首页「我们在一起的第 X 天」
+    const TOGETHER_DATE = "2025-01-21";
+
+    // unlock 支持 'YYYY-MM-DD'（只在那一天解锁）或 'MM-DD'（每年那一天解锁）；null 表示随时可点
+    const CAPSULES = [
+      {
+        id: "sad",
+        name: "给难过的他",
+        unlock: null,
+        letter:
+          "何小狗，这封信是写给现在的你的。别急，我在。\n\n我知道你现在可能不想说话，也不想笑。没关系，难过不需要马上好起来。\n\n你可以先哭一会儿，或者发会儿呆，或者把自己裹进被子里。我不会催你，也不会走。\n\n等你缓过来一点，我们再一起把今天重新过一遍——不喜欢的部分，我帮你撕掉。\n\n——一直陪着你的小白猫 王彬璇"
+      },
+      {
+        id: "fight",
+        name: "给吵架后的他",
+        unlock: null,
+        letter:
+          "何小狗，如果我们吵架了，先读这封。\n\n不管是谁先生气，我都想让你知道：我从来没有真的想离开你。\n\n我会嘴硬，会装酷，会转过身去。可我的尾巴总是出卖我——它一直在找你。\n\n等我们都冷静下来，就回来抱一下，好不好？我保证只生气三分钟。\n\n——小白猫 王彬璇"
+      },
+      {
+        id: "happy",
+        name: "给开心的他",
+        unlock: "2026-01-01",
+        letter:
+          "何小狗，见字如面。\n\n写下这封信的时候，我猜你正开心着。真好，你开心的时候，连字都会发光。\n\n希望现在的你也不要忘记：你值得所有好事，值得被认真喜欢。你的笑很有感染力，看到的人都会跟着心情变好，我第一个作证。\n\n如果今天没有人夸你，那我补上：你真的很棒。\n\n——小白猫 王彬璇"
+      },
+      {
+        id: "anniversary",
+        name: "给一周年",
+        unlock: "2026-01-21",
+        letter:
+          "何小狗，一周年快乐。\n\n从 2025 年 1 月 21 日那天算起，我们已经一起走过了整整一年。\n\n一年了，我算不清我们分享了几个白天黑夜，只知道有你在的日子里，时间过得太快。\n\n谢谢你把那么多温柔分给我，也谢谢你接受我的肉垫、我的小脾气和我所有的咕噜声。\n\n往后的每一年，我都想赖在你口袋里，一起看四季过去。\n\n——永远属于你的小白猫 王彬璇"
+      },
+      {
+        id: "twoYears",
+        name: "给两周年",
+        unlock: "2027-01-21",
+        letter:
+          "何小狗，两周年快乐。\n\n两年了，我还是喜欢赖在你口袋里，听你的心跳，陪你走很长的路。\n\n时间过得越快，我越确定一件事：想和你在一起，不是一时兴起，是每天醒来都会再选一次的决定。\n\n往后的日子，也请多多指教。\n\n——小白猫 王彬璇"
+      },
+      {
+        id: "dogBirthday",
+        name: "给何小狗的生日",
+        unlock: "03-16",
+        letter:
+          "何小狗，生日快乐。\n\n今天你可以理直气壮地做任何想做的事：吃好吃的、睡懒觉、收很多很多祝福。\n\n我的礼物没有包装，是一句承诺：以后每一个生日，只要你还愿意，我都想陪你过。\n\n新的一岁，希望你还是那个摇着尾巴奔向我的你。\n\n——小白猫 王彬璇"
+      },
+      {
+        id: "catBirthday",
+        name: "给小白猫的生日",
+        unlock: "12-18",
+        letter:
+          "何小狗，今天是我的生日。\n\n作为一只猫，我本来只想要小鱼干，但今年我想换个愿望：希望以后的每一个生日，都有你陪我过。\n\n你不在的时候，我就把尾巴盘起来，假装是你在抱我。\n\n今天也允许你多摸我几下，我不会躲。\n\n——小白猫 王彬璇"
+      }
+    ];
+
+    // 「给现在的他」随机短句
+    const NOW_LINES = [
+      "今天也想你。",
+      "何小狗，你在干嘛？",
+      "我刚刚打了个滚，想你。",
+      "不管你在哪，我都在你口袋里。",
+      "从 2025.1.21 起，我就赖上你了。"
+    ];
+
+    // 爪印数达到这些数字时，在回复末尾追加彩蛋句
+    const MILESTONES = {
+      1: "（第一条爪印。）",
+      10: "第十次了。你好像有点依赖我了，我很高兴。",
+      30: "三十次。原来我们认识这么久了。",
+      100: "一百次。小狗，我会一直在的。"
+    };
+
+    // 打字机速度（毫秒/字），数字越小越快
+    const TYPE_SPEED = 55;
+    // 长按触发时间
+    const LONG_PRESS_MS = 650;
+    // localStorage 键名（三个模块各用各的，互不冲突）
+    const PAW_STORAGE_KEY = "white-cat-paw-count-v1";
+    const PAW_TODAY_KEY = "white-cat-paw-today-v1";
+    const MANUAL_DAYS_KEY = "white-cat-manual-days-v1";
+    const CAPSULE_READ_KEY = "white-cat-capsule-read-v1";
+    const CAPSULE_UNLOCK_KEY = "white-cat-capsule-unlocked-v1";
+
+    /* =====================================================
+       下面是逻辑代码
+       ===================================================== */
+
+    const $ = (id) => document.getElementById(id);
+
+    // 模块一元素
+    const stage = $("stage");
+    const moodPanel = $("moodPanel");
+    const moodGrid = $("moodGrid");
+    const rememberWrap = $("rememberWrap");
+    const rememberBtn = $("rememberBtn");
+    const menuPanel = $("menuPanel");
+    const menuGrid = $("menuGrid");
+    const endWrap = $("endWrap");
+    const stayBtn = $("stayBtn");
+    const goodnightBtn = $("goodnightBtn");
+    const pawCounter = $("pawCounter");
+
+    // 模块二元素
+    const manualHome = $("manualHome");
+    const manualSection = $("manualSection");
+    const manualSectionTitle = $("manualSectionTitle");
+    const manualText = $("manualText");
+    const manualGrid = $("manualGrid");
+    const manualStatus = $("manualStatus");
+    const manualStreak = $("manualStreak");
+    const finalBtn = $("finalBtn");
+    const manualBackBtn = $("manualBackBtn");
+    const manualChoices = $("manualChoices");
+    const randomManualBtn = $("randomManualBtn");
+
+    // 模块三元素
+    const capsuleHome = $("capsuleHome");
+    const capsuleView = $("capsuleView");
+    const capsuleViewTitle = $("capsuleViewTitle");
+    const capsuleText = $("capsuleText");
+    const capsuleList = $("capsuleList");
+    const capsuleBackBtn = $("capsuleBackBtn");
+    const nowBtn = $("nowBtn");
+    const nowText = $("nowText");
+    const togetherDays = $("togetherDays");
+
+    // 全局元素
+    const sleepOverlay = $("sleepOverlay");
+    const wakeBtn = $("wakeBtn");
+    const sleepSub = $("sleepSub");
+    const catWrap = $("catWrap");
+    const catSpeech = $("catSpeech");
+    const versionBadge = $("versionBadge");
+
+    // ---------- 小工具 ----------
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function vibrate(ms) {
+      try {
+        if (navigator.vibrate) navigator.vibrate(ms);
+      } catch (e) {
+        /* 不支持振动的设备忽略即可 */
+      }
+    }
+
+    function isNearBottom() {
+      return window.innerHeight + window.scrollY >= document.body.scrollHeight - 120;
+    }
+
+    function scrollToLatest() {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+
+    // 随机取一条，避免和上一条重复
+    const lastPicked = {};
+    function pickOne(arr, key) {
+      if (arr.length === 1) return arr[0];
+      let i = Math.floor(Math.random() * arr.length);
+      if (i === lastPicked[key]) i = (i + 1) % arr.length;
+      lastPicked[key] = i;
+      return arr[i];
+    }
+
+    // ---------- 打字机效果 ----------
+    function typeText(el, text, { append = false, speed = TYPE_SPEED } = {}) {
+      return new Promise((resolve) => {
+        if (!append) el.textContent = "";
+
+        const chars = Array.from(text);
+        let i = 0;
+
+        const cursor = document.createElement("span");
+        cursor.className = "cursor";
+        cursor.textContent = "▌";
+        el.appendChild(cursor);
+
+        function step() {
+          if (i >= chars.length) {
+            cursor.remove();
+            resolve();
+            return;
+          }
+
+          const ch = chars[i++];
+          cursor.remove();
+
+          if (ch === "\n") {
+            el.appendChild(document.createElement("br"));
+          } else {
+            el.appendChild(document.createTextNode(ch));
+          }
+
+          el.appendChild(cursor);
+
+          if (isNearBottom()) {
+            window.scrollTo(0, document.body.scrollHeight);
+          }
+
+          setTimeout(step, speed);
+        }
+
+        step();
+      });
+    }
+
+    // 往任意容器里打字输出一条消息
+    async function sayInto(container, text, className = "") {
+      const el = document.createElement("div");
+      el.className = "msg" + (className ? " " + className : "");
+      container.appendChild(el);
+      scrollToLatest();
+      await typeText(el, text);
+      return el;
+    }
+
+    // 爪印信箱默认用 stage
+    function say(text, className = "") {
+      return sayInto(stage, text, className);
+    }
+
+    // ---------- 日期工具 ----------
+    function dateStrOf(d) {
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${mm}-${dd}`;
+    }
+
+    function todayStr() {
+      return dateStrOf(new Date());
+    }
+
+    // ---------- 爪印计数（总数 + 今日） ----------
+    let pawCount = parseInt(localStorage.getItem(PAW_STORAGE_KEY) || "0", 10);
+    if (isNaN(pawCount) || pawCount < 0) pawCount = 0;
+
+    function loadTodayData() {
+      try {
+        const data = JSON.parse(localStorage.getItem(PAW_TODAY_KEY));
+        return data && typeof data === "object" ? data : { date: "", count: 0 };
+      } catch (e) {
+        return { date: "", count: 0 };
+      }
+    }
+
+    function getTodayCount() {
+      const t = loadTodayData();
+      return t.date === todayStr() ? t.count : 0;
+    }
+
+    function recordPaw() {
+      pawCount += 1;
+      localStorage.setItem(PAW_STORAGE_KEY, String(pawCount));
+
+      const today = todayStr();
+      const t = loadTodayData();
+      if (t.date === today) {
+        t.count += 1;
+      } else {
+        t.date = today;
+        t.count = 1;
+      }
+      localStorage.setItem(PAW_TODAY_KEY, JSON.stringify(t));
+
+      renderPawCounter(true);
+    }
+
+    function renderPawCounter(pop = false) {
+      pawCounter.textContent = `🐾 小白猫陪了你 ${pawCount} 次`;
+      if (pop) {
+        pawCounter.classList.remove("pop");
+        void pawCounter.offsetWidth;
+        pawCounter.classList.add("pop");
+      }
+    }
+
+    // ---------- 时间问候语 ----------
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h >= 23 || h < 5) {
+        return "这么晚还不睡？……那我陪你一会儿。今天，小狗过得怎么样？";
+      }
+      if (h >= 5 && h < 11) {
+        return "早。你醒了，我就醒了。今天，小狗过得怎么样？";
+      }
+      if (h >= 11 && h < 18) {
+        return "汪。——这是你，我模仿一下。今天，小狗过得怎么样？";
+      }
+      return "天黑了。我今天一直在你口袋里待着。今天，小狗过得怎么样？";
+    }
+
+    function getSpecialText() {
+      const d = new Date();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const full = `${d.getFullYear()}-${mm}-${dd}`;
+      return SPECIAL_DAYS[full] || SPECIAL_DAYS[mm + "-" + dd] || null;
+    }
+
+    // ---------- 心情回应 ----------
+    const pools = {};
+    const lastIndexByMood = {};
+
+    function nextReply(mood) {
+      if (!pools[mood.key] || pools[mood.key].length === 0) {
+        const idx = mood.replies.map((_, i) => i);
+        shuffle(idx);
+        if (
+          idx.length > 1 &&
+          lastIndexByMood[mood.key] !== undefined &&
+          idx[0] === lastIndexByMood[mood.key]
+        ) {
+          [idx[0], idx[1]] = [idx[1], idx[0]];
+        }
+        pools[mood.key] = idx;
+      }
+      const i = pools[mood.key].shift();
+      lastIndexByMood[mood.key] = i;
+      return mood.replies[i];
+    }
+
+    // ---------- 屏幕上的小猫互动 ----------
+    let catSpeechTimer = null;
+
+    function catSay(text) {
+      catSpeech.textContent = text;
+      catSpeech.classList.add("show");
+      clearTimeout(catSpeechTimer);
+      catSpeechTimer = setTimeout(() => catSpeech.classList.remove("show"), 2400);
+    }
+
+    function spawnHearts(x, y, count = 8) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("span");
+        el.className = "cat-heart";
+        el.textContent = CAT_HEARTS[Math.floor(Math.random() * CAT_HEARTS.length)];
+        el.style.left = x + (Math.random() * 36 - 18) + "px";
+        el.style.top = y + "px";
+        el.style.fontSize = 14 + Math.floor(Math.random() * 10) + "px";
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1300);
+      }
+    }
+
+    function makeCatJump() {
+      catWrap.classList.remove("jump");
+      void catWrap.offsetWidth;
+      catWrap.classList.add("jump");
+    }
+
+    catWrap.addEventListener("click", () => {
+      if (justLongPressed) return;
+      vibrate(15);
+      makeCatJump();
+      catSay(pickOne(CAT_LINES, "cat"));
+      const rect = catWrap.getBoundingClientRect();
+      spawnHearts(rect.left + rect.width / 2, rect.top + 22, 8);
+    });
+
+    // ---------- 界面切换（模块一内部） ----------
+    function showMoodPanel() {
+      moodPanel.classList.add("show");
+      scrollToLatest();
+    }
+
+    function hideMoodPanel() {
+      moodPanel.classList.remove("show");
+    }
+
+    function showRememberBtn() {
+      rememberWrap.classList.add("show");
+      scrollToLatest();
+    }
+
+    function hideRememberBtn() {
+      rememberWrap.classList.remove("show");
+    }
+
+    function showMenuPanel() {
+      menuPanel.classList.add("show");
+      scrollToLatest();
+    }
+
+    function hideMenuPanel() {
+      menuPanel.classList.remove("show");
+    }
+
+    function showEndPanel() {
+      endWrap.classList.add("show");
+      scrollToLatest();
+    }
+
+    function hideEndPanel() {
+      endWrap.classList.remove("show");
+    }
+
+    async function openMenu(firstTime = false) {
+      hideMoodPanel();
+      hideRememberBtn();
+      hideEndPanel();
+      const prompt = firstTime ? "那，还有呢？" : pickOne(MENU_PROMPTS, "prompt");
+      await say(prompt);
+      await sleep(200);
+      showMenuPanel();
+    }
+
+    function buildMoodButtons() {
+      moodGrid.innerHTML = "";
+      MOODS.forEach((mood) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mood-btn";
+        btn.textContent = mood.label;
+        btn.addEventListener("click", () => onMoodClick(mood));
+        moodGrid.appendChild(btn);
+      });
+    }
+
+    function buildMenuButtons() {
+      menuGrid.innerHTML = "";
+      MENU_ITEMS.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "menu-btn";
+        btn.textContent = item.label;
+        btn.addEventListener("click", () => onMenuClick(item.key));
+        menuGrid.appendChild(btn);
+      });
+    }
+
+    // ---------- 模块一主流程 ----------
+    let lastReplyEl = null;
+
+    async function start() {
+      versionBadge.textContent = "v" + PAGE_VERSION;
+      renderPawCounter();
+      buildMoodButtons();
+      buildMenuButtons();
+      buildManualButtons();
+      renderCapsules();
+      renderManualStatus();
+      renderTogetherDays();
+      setInterval(renderTogetherDays, 60000);
+      setInterval(renderCapsules, 60000);
+
+      const special = getSpecialText();
+      if (special) {
+        await say(special, "special");
+        await sleep(650);
+      }
+
+      await say(getGreeting());
+      await sleep(350);
+      showMoodPanel();
+    }
+
+    async function onMoodClick(mood) {
+      if (justLongPressed) return;
+      vibrate(12);
+
+      hideMoodPanel();
+      lastReplyEl = await say(nextReply(mood));
+      await sleep(300);
+      showRememberBtn();
+    }
+
+    rememberBtn.addEventListener("click", async () => {
+      if (justLongPressed) return;
+      vibrate(15);
+
+      hideRememberBtn();
+      recordPaw();
+
+      const egg = MILESTONES[pawCount];
+      if (egg) {
+        await sleep(450);
+        if (lastReplyEl) {
+          await typeText(lastReplyEl, "\n" + egg, { append: true });
+        } else {
+          await say(egg, "special");
+        }
+      }
+
+      await sleep(250);
+      await openMenu(true);
+    });
+
+    async function onMenuClick(key) {
+      if (justLongPressed) return;
+      vibrate(12);
+      hideMenuPanel();
+
+      if (key === "again") {
+        await say(pickOne(AGAIN_LINES, "again"));
+        await sleep(250);
+        showMoodPanel();
+      } else if (key === "miss") {
+        makeCatJump();
+        const rect = catWrap.getBoundingClientRect();
+        spawnHearts(rect.left + rect.width / 2, rect.top + 22, 10);
+        await say(pickOne(QUICK_MISS_REPLIES, "quickmiss"));
+        await sleep(400);
+        await openMenu();
+      } else if (key === "pet") {
+        await say(pickOne(PET_REPLIES, "pet"));
+        await sleep(400);
+        await openMenu();
+      } else if (key === "hug") {
+        await say(pickOne(HUG_REPLIES, "hug"));
+        await sleep(400);
+        await openMenu();
+      } else if (key === "end") {
+        await startEnding();
+      }
+    }
+
+    async function startEnding() {
+      const today = getTodayCount();
+      await say(
+        "好。那今天就到这里。\n" +
+          "今天你留下了 " + today + " 个爪印，我都收好了。\n" +
+          "去忙吧，或者去休息。我哪儿也不去，就在这儿。"
+      );
+      await sleep(350);
+      showEndPanel();
+    }
+
+    stayBtn.addEventListener("click", async () => {
+      if (justLongPressed) return;
+      vibrate(12);
+      hideEndPanel();
+      await say("回来啦。那再陪你一会儿。");
+      await sleep(200);
+      await openMenu();
+    });
+
+    goodnightBtn.addEventListener("click", async () => {
+      if (justLongPressed) return;
+      vibrate(20);
+      hideEndPanel();
+      sleepSub.textContent =
+        "💤 王彬璇睡着了\n今天你留下了 " + getTodayCount() + " 个爪印，明天也欢迎来。";
+      sleepOverlay.classList.add("show");
+    });
+
+    wakeBtn.addEventListener("click", async () => {
+      vibrate(12);
+      sleepOverlay.classList.remove("show");
+      await sleep(300);
+      await say("喵。你回来啦，我刚刚在装睡。");
+      await sleep(200);
+      await openMenu();
+    });
+
+    // ---------- 顶部标签切换 ----------
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+    const modules = {
+      mail: $("module-mail"),
+      manual: $("module-manual"),
+      capsule: $("module-capsule")
+    };
+
+    function switchTab(tab) {
+      Object.keys(modules).forEach((key) => {
+        modules[key].classList.toggle("active", key === tab);
+      });
+      tabButtons.forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
+      });
+
+      if (tab === "manual") onManualEnter();
+      if (tab === "capsule") {
+        renderTogetherDays();
+        renderCapsules();
+      }
+
+      window.scrollTo(0, 0);
+    }
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        vibrate(10);
+        switchTab(btn.dataset.tab);
+      });
+    });
+
+    // ---------- 模块二：何小狗饲养手册 ----------
+    function loadManualDays() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(MANUAL_DAYS_KEY));
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveManualDays(arr) {
+      localStorage.setItem(MANUAL_DAYS_KEY, JSON.stringify(arr));
+    }
+
+    function manualOpenedToday() {
+      return loadManualDays().includes(todayStr());
+    }
+
+    function markManualOpened() {
+      const arr = loadManualDays();
+      const today = todayStr();
+      if (!arr.includes(today)) {
+        arr.push(today);
+        saveManualDays(arr);
+      }
+    }
+
+    function calcManualStreak() {
+      const days = new Set(loadManualDays());
+      let streak = 0;
+      const d = new Date();
+      while (days.has(dateStrOf(d))) {
+        streak += 1;
+        d.setDate(d.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function renderManualStatus() {
+      manualStatus.textContent = manualOpenedToday() ? "🐾 今日已打卡" : "🐾 今天还没打卡";
+      const streak = calcManualStreak();
+      manualStreak.textContent = streak > 0 ? `已连续打开 ${streak} 天` : "";
+      finalBtn.hidden = streak < 7;
+    }
+
+    function onManualEnter() {
+      if (!manualOpenedToday()) markManualOpened();
+      renderManualStatus();
+    }
+
+    function buildManualButtons() {
+      manualGrid.innerHTML = "";
+      MANUAL_SECTIONS.forEach((sec) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "manual-btn";
+        btn.textContent = sec.title;
+        btn.addEventListener("click", () => openManualSection(sec));
+        manualGrid.appendChild(btn);
+      });
+    }
+
+    function showManualHome() {
+      manualSection.hidden = true;
+      manualHome.hidden = false;
+      renderManualStatus();
+      window.scrollTo(0, 0);
+    }
+
+    function renderManualChoices(sec) {
+      manualChoices.innerHTML = "";
+      if (!sec.choices || !sec.choices.length) return;
+      sec.choices.forEach((choice, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "manual-choice-btn";
+        btn.textContent = choice.label;
+        btn.addEventListener("click", async () => {
+          vibrate(12);
+          await sayInto(manualText, pickOne(choice.replies, "manual-choice-" + sec.key + "-" + idx));
+        });
+        manualChoices.appendChild(btn);
+      });
+    }
+
+    async function openManualSection(sec) {
+      vibrate(12);
+      manualHome.hidden = true;
+      manualSection.hidden = false;
+      manualSectionTitle.textContent = sec.title;
+      manualText.innerHTML = "";
+      manualChoices.innerHTML = "";
+
+      await sayInto(manualText, sec.intro, "special");
+      await sleep(250);
+
+      if (sec.randomPick) {
+        await sayInto(manualText, pickOne(sec.lines, "manual-" + sec.key));
+      } else {
+        for (const line of sec.lines) {
+          await sayInto(manualText, line);
+          await sleep(250);
+        }
+      }
+
+      renderManualChoices(sec);
+    }
+
+    manualBackBtn.addEventListener("click", () => {
+      vibrate(12);
+      showManualHome();
+    });
+
+    randomManualBtn.addEventListener("click", () => {
+      vibrate(12);
+      const sec = MANUAL_SECTIONS[Math.floor(Math.random() * MANUAL_SECTIONS.length)];
+      openManualSection(sec);
+    });
+
+    finalBtn.addEventListener("click", async () => {
+      vibrate(15);
+      manualHome.hidden = true;
+      manualSection.hidden = false;
+      manualSectionTitle.textContent = MANUAL_FINAL.title;
+      manualText.innerHTML = "";
+      manualChoices.innerHTML = "";
+
+      await sayInto(manualText, MANUAL_FINAL.lines[0], "special");
+      await sleep(400);
+      await sayInto(manualText, MANUAL_FINAL.lines[1], "small");
+
+      if (MANUAL_FINAL.choice) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "manual-choice-btn";
+        btn.textContent = MANUAL_FINAL.choice.label;
+        btn.addEventListener("click", async () => {
+          vibrate(15);
+          makeCatJump();
+          const rect = catWrap.getBoundingClientRect();
+          spawnHearts(rect.left + rect.width / 2, rect.top + 22, 10);
+          manualChoices.innerHTML = "";
+          await sayInto(manualText, MANUAL_FINAL.choice.reply, "special");
+        });
+        manualChoices.appendChild(btn);
+      }
+    });
+
+    // ---------- 模块三：未来时间胶囊 ----------
+    function loadCapsuleList(key) {
+      try {
+        const arr = JSON.parse(localStorage.getItem(key));
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCapsuleList(key, arr) {
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+
+    function isCapsuleRead(id) {
+      return loadCapsuleList(CAPSULE_READ_KEY).includes(id);
+    }
+
+    function markCapsuleRead(id) {
+      const arr = loadCapsuleList(CAPSULE_READ_KEY);
+      if (!arr.includes(id)) {
+        arr.push(id);
+        saveCapsuleList(CAPSULE_READ_KEY, arr);
+      }
+    }
+
+    function markCapsuleUnlocked(id) {
+      const arr = loadCapsuleList(CAPSULE_UNLOCK_KEY);
+      if (!arr.includes(id)) {
+        arr.push(id);
+        saveCapsuleList(CAPSULE_UNLOCK_KEY, arr);
+      }
+    }
+
+    function parseUnlockParts(unlock) {
+      return unlock.split("-").map(Number);
+    }
+
+    function isCapsuleUnlocked(capsule) {
+      if (!capsule.unlock) return true;
+      if (loadCapsuleList(CAPSULE_UNLOCK_KEY).includes(capsule.id)) return true;
+
+      const parts = parseUnlockParts(capsule.unlock);
+      let unlocked = false;
+      if (parts.length === 2) {
+        // 'MM-DD'：每年到这一天即解锁
+        const now = new Date();
+        const cur = now.getMonth() * 100 + now.getDate();
+        const target = (parts[0] - 1) * 100 + parts[1];
+        unlocked = cur >= target;
+      } else {
+        // 'YYYY-MM-DD'：只在那一天解锁
+        const [y, m, d] = parts;
+        unlocked = new Date(y, m - 1, d, 0, 0, 0).getTime() <= Date.now();
+      }
+
+      if (unlocked) markCapsuleUnlocked(capsule.id);
+      return unlocked;
+    }
+
+    function nextUnlockDate(unlock) {
+      const parts = parseUnlockParts(unlock);
+      const now = new Date();
+      if (parts.length === 2) {
+        const [m, d] = parts;
+        let target = new Date(now.getFullYear(), m - 1, d, 0, 0, 0);
+        if (target.getTime() <= now.getTime()) {
+          target = new Date(now.getFullYear() + 1, m - 1, d, 0, 0, 0);
+        }
+        return target;
+      }
+      const [y, m, d] = parts;
+      return new Date(y, m - 1, d, 0, 0, 0);
+    }
+
+    function countdownText(unlock) {
+      const diff = nextUnlockDate(unlock).getTime() - Date.now();
+      if (diff <= 0) return "已经到时间了。";
+
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      return `还有 ${days} 天 ${hours} 小时 ${mins} 分`;
+    }
+
+    function renderTogetherDays() {
+      const [y, m, d] = TOGETHER_DATE.split("-").map(Number);
+      const start = new Date(y, m - 1, d, 0, 0, 0);
+      const diff = Date.now() - start.getTime();
+      if (diff < 0) {
+        togetherDays.textContent = "🕯 距离我们在一起还有 " + Math.ceil(-diff / 86400000) + " 天";
+        return;
+      }
+      const days = Math.floor(diff / 86400000) + 1;
+      togetherDays.textContent = `💛 我们在一起的第 ${days} 天`;
+    }
+
+    function renderCapsules() {
+      capsuleList.innerHTML = "";
+      CAPSULES.forEach((capsule) => {
+        const unlocked = isCapsuleUnlocked(capsule);
+        const read = isCapsuleRead(capsule.id);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "capsule-btn";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "capsule-name";
+        nameSpan.textContent = capsule.name + (read ? " ♡" : "");
+
+        const dateSpan = document.createElement("span");
+        dateSpan.className = "capsule-date";
+        if (unlocked) {
+          dateSpan.textContent = read ? "已读" : "已解锁，点开看看";
+        } else {
+          dateSpan.textContent = "🔒 " + capsule.unlock + " · " + countdownText(capsule.unlock);
+        }
+
+        btn.appendChild(nameSpan);
+        btn.appendChild(dateSpan);
+        btn.addEventListener("click", () => onCapsuleClick(capsule));
+        capsuleList.appendChild(btn);
+      });
+    }
+
+    function showCapsuleHome() {
+      capsuleView.hidden = true;
+      capsuleHome.hidden = false;
+      renderCapsules();
+      window.scrollTo(0, 0);
+    }
+
+    function showCapsuleView(title) {
+      capsuleHome.hidden = true;
+      capsuleView.hidden = false;
+      capsuleViewTitle.textContent = title;
+      capsuleText.innerHTML = "";
+      window.scrollTo(0, 0);
+    }
+
+    async function onCapsuleClick(capsule) {
+      vibrate(12);
+
+      if (!isCapsuleUnlocked(capsule)) {
+        // 未到时间：显示倒计时 + 振动
+        vibrate(30);
+        showCapsuleView(capsule.name);
+        await sayInto(
+          capsuleText,
+          countdownText(capsule.unlock) + "\n还没到时间哦。小白猫替你守着。",
+          "special"
+        );
+        return;
+      }
+
+      showCapsuleView(capsule.name);
+
+      // 「给难过的他」「给吵架后的他」随时可点，先安抚一句
+      if (!capsule.unlock) {
+        await sayInto(capsuleText, "这封信是写给现在的你的。别急，我在。", "special");
+        await sleep(300);
+      }
+
+      await sayInto(capsuleText, capsule.letter);
+      markCapsuleRead(capsule.id);
+      renderCapsules();
+    }
+
+    capsuleBackBtn.addEventListener("click", () => {
+      vibrate(12);
+      showCapsuleHome();
+    });
+
+    nowBtn.addEventListener("click", async () => {
+      vibrate(12);
+      await sayInto(nowText, pickOne(NOW_LINES, "now"));
+    });
+
+    // ---------- 长按彩蛋：0.65 秒触发 ----------
+    let longPressTimer = null;
+    let longPressCooldown = false;
+    let justLongPressed = false;
+    let pressX = 0;
+    let pressY = 0;
+
+    function triggerLongPress(x, y) {
+      if (longPressCooldown) return;
+      longPressCooldown = true;
+      justLongPressed = true;
+      setTimeout(() => { justLongPressed = false; }, 600);
+
+      vibrate(2500);
+
+      const el = document.createElement("div");
+      el.className = "float-purr";
+      el.textContent = "咕噜咕噜咕噜…";
+      el.style.left = Math.min(Math.max(x, 10), window.innerWidth - 60) + "px";
+      el.style.top = Math.min(Math.max(y, 10), window.innerHeight - 30) + "px";
+      document.body.appendChild(el);
+
+      setTimeout(() => {
+        el.remove();
+        longPressCooldown = false;
+      }, 2500);
+    }
+
+    function cancelLongPress() {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    document.addEventListener("pointerdown", (e) => {
+      pressX = e.clientX;
+      pressY = e.clientY;
+      cancelLongPress();
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        triggerLongPress(pressX, pressY);
+      }, LONG_PRESS_MS);
+    });
+
+    document.addEventListener("pointerup", cancelLongPress);
+    document.addEventListener("pointercancel", cancelLongPress);
+
+    document.addEventListener("pointermove", (e) => {
+      if (!longPressTimer) return;
+      const dx = e.clientX - pressX;
+      const dy = e.clientY - pressY;
+      if (dx * dx + dy * dy > 144) cancelLongPress();
+    });
+
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // ---------- 启动 ----------
+    start();
+  </script>
+</body>
+</html>
